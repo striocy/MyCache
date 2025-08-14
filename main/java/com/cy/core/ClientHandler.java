@@ -13,8 +13,8 @@ public class ClientHandler implements Runnable {
         String cmd = command[0].toUpperCase();
         switch(cmd){
             case "SET" :
-                if(command.length != 3) return "ERR set command\r\n";
-                return mycache.set(command[1], command[2]);
+                if(command.length != 4) return "ERR set command\r\n";
+                return mycache.set(command[1], command[2], Long.valueOf(command[3]));
 
             case "GET" :
                 if(command.length != 2) return "ERR get command\r\n";

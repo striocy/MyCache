@@ -1,6 +1,7 @@
 package com.cy.core.expire;
+import com.cy.api.Cache;
 import com.cy.api.CacheExpire;
-import com.cy.core.JCache;
+import com.cy.core.cacheEntry.JCache;
 
 
 import java.util.HashMap;
@@ -8,12 +9,16 @@ import java.util.Map;
 
 public class CacheExpireSimple<K,V> implements CacheExpire<K,V>{
     private final Map<K, Long> expireMap = new HashMap<>();
-    private final JCache<K,V> cache;
-    public CacheExpireSimple(JCache cache) {
-        this.cache = cache;
+    private Cache<K,V> cache;
+    public CacheExpireSimple() {
         ExpireThread expireThread = new ExpireThread();
         expireThread.start();
     }
+    @Override
+    public void setCache(Cache<K, V> cache) {
+        this.cache = cache;
+    }
+
     @Override
     public void expire(K key, long expireAt) {
         expireMap.put(key,expireAt);

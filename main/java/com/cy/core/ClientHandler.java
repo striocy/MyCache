@@ -1,10 +1,13 @@
 package com.cy.core;
+import com.cy.api.Cache;
+import com.cy.core.cacheEntry.JCache;
+
 import java.io.*;
 import java.net.Socket;
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
-    private final JCache mycache;
-    public ClientHandler(Socket clientSocket, JCache mycache) {
+    private final Cache mycache;
+    public ClientHandler(Socket clientSocket, Cache mycache) {
         this.clientSocket = clientSocket;
         this.mycache = mycache;
     }

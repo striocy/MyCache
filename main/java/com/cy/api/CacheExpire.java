@@ -5,5 +5,6 @@ public interface CacheExpire<K,V>{
     void expire(final K key, final long expireAt);
     // lazy start to delete expired key in expireMap
     void refresh(final K key);
+    void setCache(Cache<K,V> cache);
 }
 

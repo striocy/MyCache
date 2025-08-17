@@ -1,7 +1,8 @@
 package com.cy.core.expire;
 
+import com.cy.api.Cache;
 import com.cy.api.CacheExpire;
-import com.cy.core.JCache;
+import com.cy.core.cacheEntry.JCache;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,12 +15,15 @@ import static java.lang.Thread.sleep;
 public class CacheExpireSorted<K,V> implements CacheExpire<K,V> {
     private final ConcurrentHashMap<Long, LinkedList<K>> expireMap = new ConcurrentHashMap<>();
     private final Set<Long> keys = new ConcurrentSkipListSet<>();
-    private final JCache<K,V> cache;
-
-    public CacheExpireSorted(JCache<K,V> cache) {
-        this.cache = cache;
+    private Cache<K,V>  cache;
+    public CacheExpireSorted() {
         scheduledTask st=new scheduledTask();
-        st.run();
+        Thread thread=new Thread(st);
+        thread.start();
+    }
+    @Override
+    public void setCache(Cache<K,V> cache) {
+        this.cache = cache;
     }
     @Override
     public void expire (final K key, final long expireAt) {
@@ -33,7 +37,7 @@ public class CacheExpireSorted<K,V> implements CacheExpire<K,V> {
     }
     @Override
     public void refresh(K key) {
-        long expireAt = this.cache.get(key).expireAt();
+        long expireAt = cache.getExpireAt(key);
         if(expireAt > System.currentTimeMillis()){
             return;
         }
@@ -65,7 +69,7 @@ public class CacheExpireSorted<K,V> implements CacheExpire<K,V> {
                     if(expireAt > currentTime) {
                         break;
                     }
-                remove(expireAt);
+                    remove(expireAt);
             }
                 try {
                     sleep(1000);

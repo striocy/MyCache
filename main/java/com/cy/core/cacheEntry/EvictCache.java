@@ -3,36 +3,40 @@ package com.cy.core.cacheEntry;
 import com.cy.api.Cache;
 import com.cy.api.CacheEvict;
 import com.cy.api.CacheExpire;
+import com.cy.api.PersistenceManager;
+import com.cy.core.exception.PersistenceException;
 import com.cy.core.model.Node;
-import com.cy.core.model.ValueHolder;
+import com.cy.core.model.RDBData;
+import com.cy.core.persist.RDB;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class EvictCache<K,V> implements Cache<K,V> {
-    private final Map<K, Node<K,V>> cache = new ConcurrentHashMap<>();
+    private final Map<K, Node<K,V>> cache;
     private final int size;
     private Node<K,V> head;
     private Node<K,V> tail;
     private final CacheEvict<K,V> evictor;
     private  CacheExpire<K,V> expirer;
-    public EvictCache(int MAX_size, CacheEvict<K,V> evictor, CacheExpire<K,V> expire) {
+    private PersistenceManager persist;
+    public EvictCache(int MAX_size, CacheEvict<K,V> evictor, CacheExpire<K,V> expire, File file) {
         this.evictor = evictor;
+        this.cache = evictor.initMap();
         this.expirer = expire;
         this.size =  MAX_size;
-        head = tail = null;
+        head = tail = new Node<>();
+        this.persist = new RDB<>(file);
     }
     @Override
     public String set(K key, V value, long expireAt) {
-        Node<K,V> tmp = new Node<>(key,value,expireAt);
-        if(head == null){
-            head = tmp;
-            tail = tmp;
-        }
         if(cache.size()>=size){
             evictor.doEvict(this);
         }
-        evictor.insertIntoTail(this, tmp);
+        Node<K,V> tmp = evictor.put(this, key, value, expireAt);
         cache.put(key, tmp);
         expire(key, expireAt);
         return "ok\n";
@@ -45,9 +49,7 @@ public class EvictCache<K,V> implements Cache<K,V> {
         if(cache.size()<=1){
             return cache.get(key).getValue();
         }
-        Node<K,V> tmp = evictor.cutFrom(this, key);
-        evictor.insertIntoTail(this, tmp);
-        return tmp.getValue();
+        return evictor.update(this, key).getValue();
     }
 
     @Override
@@ -100,5 +102,22 @@ public class EvictCache<K,V> implements Cache<K,V> {
     @Override
     public CacheExpire<K, V> getExpirer() {
         return expirer;
+    }
+
+    @Override
+    public Iterator<? extends RDBData<K,V>> valueIterator() {
+        return cache.values().iterator();
+    }
+
+    @Override
+    public String save() throws FileNotFoundException, PersistenceException {
+        persist.save(this);
+        return "OK\n";
+    }
+
+    @Override
+    public String load() throws PersistenceException, FileNotFoundException {
+        persist.load(this);
+        return "OK\n";
     }
 }

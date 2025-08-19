@@ -1,6 +1,7 @@
 package com.cy.core;
 import com.cy.api.Cache;
 import com.cy.core.cacheEntry.JCache;
+import com.cy.core.exception.PersistenceException;
 
 import java.io.*;
 import java.net.Socket;
@@ -11,7 +12,7 @@ public class ClientHandler implements Runnable {
         this.clientSocket = clientSocket;
         this.mycache = mycache;
     }
-    private String executeCommand(String[] command){
+    private String executeCommand(String[] command) throws FileNotFoundException, PersistenceException {
         if (command.length == 0) return "ERR empty command\r\n";
         String cmd = command[0].toUpperCase();
         switch(cmd){
@@ -36,6 +37,12 @@ public class ClientHandler implements Runnable {
                 mycache.expire(command[1], Long.valueOf(command[2]));
                 return "OK\r\n";
 
+            case "SAVE":
+                return mycache.save();
+
+            case "LOAD":
+                return mycache.load();
+
         }
         return "error, unknown command\r\n";
     }
@@ -58,6 +65,8 @@ public class ClientHandler implements Runnable {
                 writer.flush();
         }}catch (IOException e){
                 System.err.println("Client connection error: " + e.getMessage());
-            }
+            } catch (PersistenceException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

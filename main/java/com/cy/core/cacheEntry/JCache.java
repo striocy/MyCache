@@ -1,9 +1,13 @@
 package com.cy.core.cacheEntry;
 import com.cy.api.Cache;
 import com.cy.api.CacheExpire;
+import com.cy.core.exception.PersistenceException;
 import com.cy.core.expire.CacheExpireSorted;
+import com.cy.core.model.RDBData;
 import com.cy.core.model.ValueHolder;
 
+import java.io.FileNotFoundException;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 public class JCache<K,V> implements Cache<K,V> {
     private final ConcurrentHashMap<K, ValueHolder<V>> cache = new ConcurrentHashMap<>();
@@ -53,6 +57,21 @@ public class JCache<K,V> implements Cache<K,V> {
     @Override
     public CacheExpire<K, V> getExpirer() {
         return this.cacheExpire;
+    }
+
+    @Override
+    public Iterator<? extends RDBData<K, V>> valueIterator() {
+        return null;
+    }
+
+    @Override
+    public String save() throws FileNotFoundException, PersistenceException {
+        return "";
+    }
+
+    @Override
+    public String load() throws FileNotFoundException, PersistenceException {
+        return "";
     }
 
     public JCache<K,V> expireAt(K key, long expireTime){
